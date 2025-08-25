@@ -21,19 +21,57 @@ const winnerMessage = document.getElementById('winner-message');
 const aiModeCheckbox = document.getElementById('ai-mode');
 const modeText = document.getElementById('mode-text');
 
+// 添加网格线和交叉点
+function addGridLines() {
+    const boardGrid = document.getElementById('board-grid');
+    
+    // 获取单元格的实际尺寸
+    const cell = document.querySelector('.cell');
+    const cellWidth = cell ? cell.offsetWidth : 25;
+    const cellHeight = cell ? cell.offsetHeight : 25;
+    
+    // 添加水平线
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        const horizontalLine = document.createElement('div');
+        horizontalLine.className = 'grid-line horizontal-line';
+        horizontalLine.style.top = `${i * cellHeight}px`;
+        boardGrid.appendChild(horizontalLine);
+    }
+    
+    // 添加垂直线
+    for (let j = 0; j < BOARD_SIZE; j++) {
+        const verticalLine = document.createElement('div');
+        verticalLine.className = 'grid-line vertical-line';
+        verticalLine.style.left = `${j * cellWidth}px`;
+        boardGrid.appendChild(verticalLine);
+    }
+    
+    // 添加交叉点
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            const intersection = document.createElement('div');
+            intersection.className = 'intersection';
+            intersection.style.top = `${i * cellHeight}px`;
+            intersection.style.left = `${j * cellWidth}px`;
+            boardGrid.appendChild(intersection);
+        }
+    }
+}
+
 // 初始化游戏
 function initGame() {
     // 初始化棋盘数组
     board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
     
     // 清空棋盘DOM
-    gameBoard.innerHTML = '';
+    gameBoard.innerHTML = '<div id="board-grid"></div>';
+    const boardGrid = document.getElementById('board-grid');
     
-    // 创建棋盘格子
+    // 创建棋盘网格
     for (let i = 0; i < BOARD_SIZE; i++) {
         const row = document.createElement('div');
         row.className = 'cell-row';
-        gameBoard.appendChild(row);
+        boardGrid.appendChild(row);
         
         for (let j = 0; j < BOARD_SIZE; j++) {
             const cell = document.createElement('div');
@@ -44,6 +82,9 @@ function initGame() {
             row.appendChild(cell);
         }
     }
+    
+    // 添加网格线和交叉点
+    addGridLines();
     
     // 重置游戏状态
     currentPlayer = BLACK;
@@ -108,7 +149,7 @@ function placePiece(row, col, player) {
     // 更新UI
     const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
     const piece = document.createElement('div');
-    piece.className = `piece ${player === BLACK ? 'black-piece' : 'white-piece'} win`;
+    piece.className = `piece ${player === BLACK ? 'black-piece' : 'white-piece'}`;
     cell.appendChild(piece);
     
     // 添加最后一步的标记
