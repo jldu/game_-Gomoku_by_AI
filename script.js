@@ -10,12 +10,16 @@ let board = [];
 let currentPlayer = BLACK;
 let gameOver = false;
 let lastMove = null;
+let aiMode = false; // 是否开启AI模式
+let aiPlayer = WHITE; // AI执白子
 
 // DOM元素
 const gameBoard = document.getElementById('game-board');
 const currentPlayerSpan = document.getElementById('current-player');
 const resetBtn = document.getElementById('reset-btn');
 const winnerMessage = document.getElementById('winner-message');
+const aiModeCheckbox = document.getElementById('ai-mode');
+const modeText = document.getElementById('mode-text');
 
 // 初始化游戏
 function initGame() {
@@ -45,6 +49,7 @@ function initGame() {
     currentPlayer = BLACK;
     gameOver = false;
     lastMove = null;
+    aiMode = aiModeCheckbox.checked;
     
     // 更新UI
     updateCurrentPlayer();
@@ -77,6 +82,11 @@ function handleCellClick(row, col) {
     // 切换玩家
     currentPlayer = currentPlayer === BLACK ? WHITE : BLACK;
     updateCurrentPlayer();
+    
+    // 如果是AI模式且当前是AI回合，则AI下棋
+    if (aiMode && currentPlayer === aiPlayer && !gameOver) {
+        setTimeout(makeAIMove, 500); // 延迟0.5秒让AI下棋，增加真实感
+    }
 }
 
 // 落子
@@ -192,4 +202,129 @@ document.addEventListener('DOMContentLoaded', initGame);
 
 // 添加触屏设备支持
 document.addEventListener('touchstart', function() {}, false);
+
+// AI模式开关事件监听
+if (aiModeCheckbox) {
+    aiModeCheckbox.addEventListener('change', function() {
+        modeText.textContent = this.checked ? 'AI模式' : '双人模式';
+    });
+}
+
+// AI下棋函数
+function makeAIMove() {
+    if (!aiMode || gameOver || currentPlayer !== aiPlayer) {
+        return;
+    }
+    
+    // 使用评分系统选择最佳位置
+    const bestMove = findBestMove();
+    if (bestMove) {
+        const [row, col] = bestMove;
+        handleCellClick(row, col);
+    }
+}
+
+// 评估某个位置的得分
+function evaluatePosition(row, col, player) {
+    if (board[row][col] !== EMPTY) return -1;
+    
+    let score = 0;
+    const directions = [[0,1],[1,0],[1,1],[1,-1]];
+    
+    // 检查四个方向
+    for (const [dx, dy] of directions) {
+        let count = 1;
+        let blocked = 0;
+        
+        // 正向检查
+        for (let i = 1; i < 5; i++) {
+            const r = row + i * dx;
+            const c = col + i * dy;
+            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) {
+                blocked++;
+                break;
+            }
+            if (board[r][c] === player) {
+                count++;
+            } else if (board[r][c] !== EMPTY) {
+                blocked++;
+                break;
+            } else {
+                break;
+            }
+        }
+        
+        // 反向检查
+        for (let i = 1; i < 5; i++) {
+            const r = row - i * dx;
+            const c = col - i * dy;
+            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) {
+                blocked++;
+                break;
+            }
+            if (board[r][c] === player) {
+                count++;
+            } else if (board[r][c] !== EMPTY) {
+                blocked++;
+                break;
+            } else {
+                break;
+            }
+        }
+        
+        // 根据连子数和阻挡情况评分
+        if (count >= 5) {
+            score += 100000; // 连五
+        } else if (count === 4) {
+            if (blocked === 0) {
+                score += 10000; // 活四
+            } else if (blocked === 1) {
+                score += 1000; // 冲四
+            }
+        } else if (count === 3) {
+            if (blocked === 0) {
+                score += 1000; // 活三
+            } else if (blocked === 1) {
+                score += 100; // 眠三
+            }
+        } else if (count === 2) {
+            if (blocked === 0) {
+                score += 100; // 活二
+            }
+        }
+    }
+    
+    return score;
+}
+
+// 寻找最佳位置
+function findBestMove() {
+    let bestScore = -1;
+    let bestMove = null;
+    
+    // 遍历所有空位
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            if (board[i][j] === EMPTY) {
+                // 评估AI自己在此处下棋的得分
+                const aiScore = evaluatePosition(i, j, aiPlayer);
+                // 评估对手在此处下棋的得分（防守）
+                const opponent = aiPlayer === BLACK ? WHITE : BLACK;
+                const opponentScore = evaluatePosition(i, j, opponent);
+                
+                // 综合评分（攻防结合）
+                const totalScore = aiScore + opponentScore * 0.8;
+                
+                if (totalScore > bestScore) {
+                    bestScore = totalScore;
+                    bestMove = [i, j];
+                }
+            }
+        }
+    }
+    
+    return bestMove;
+}
+
+
 

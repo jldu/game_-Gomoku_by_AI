@@ -13,6 +13,8 @@ body {
     justify-content: center;
     align-items: center;
     color: #333;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .container {
@@ -21,8 +23,9 @@ body {
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    max-width: 90vw;
+    max-width: 95vw;
     width: 100%;
+    box-sizing: border-box;
 }
 
 h1 {

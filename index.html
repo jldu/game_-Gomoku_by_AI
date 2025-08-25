@@ -11,10 +11,20 @@
         <h1>五子棋</h1>
         <div class="game-info">
             <div class="current-player">当前玩家: <span id="current-player">黑子</span></div>
+            <div class="game-mode">
+                <label>
+                    <input type="checkbox" id="ai-mode"> 
+                    <span id="mode-text">双人模式</span>
+                </label>
+            </div>
             <button id="reset-btn">重新开始</button>
+        </div>
+        <div class="instructions">
+            <p>游戏说明：黑白双方轮流落子，率先在横、竖或斜线上形成五子连线者获胜。</p>
         </div>
         <div id="game-board"></div>
         <div id="winner-message" class="hidden"></div>
+        <div id="mobile-tip" class="mobile-tip hidden">提示：在移动端，请拖动棋盘来查看完整区域</div>
     </div>
     <script src="script.js"></script>
 </body>
