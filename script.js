@@ -51,6 +51,9 @@ function initGame() {
     lastMove = null;
     aiMode = aiModeCheckbox.checked;
     
+    // 更新模式文本
+    modeText.textContent = aiMode ? 'AI模式' : '双人模式';
+    
     // 更新UI
     updateCurrentPlayer();
     winnerMessage.classList.add('hidden');
