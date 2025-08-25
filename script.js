@@ -1,6 +1,6 @@
 
 // 游戏配置
-const BOARD_SIZE = 15;
+const BOARD_SIZE = 19;
 const EMPTY = 0;
 const BLACK = 1;
 const WHITE = 2;
