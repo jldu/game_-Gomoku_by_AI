@@ -21,70 +21,28 @@ const winnerMessage = document.getElementById('winner-message');
 const aiModeCheckbox = document.getElementById('ai-mode');
 const modeText = document.getElementById('mode-text');
 
-// 添加网格线和交叉点
-function addGridLines() {
-    const boardGrid = document.getElementById('board-grid');
-    
-    // 获取单元格的实际尺寸
-    const cell = document.querySelector('.cell');
-    const cellWidth = cell ? cell.offsetWidth : 25;
-    const cellHeight = cell ? cell.offsetHeight : 25;
-    
-    // 添加水平线
-    for (let i = 0; i < BOARD_SIZE; i++) {
-        const horizontalLine = document.createElement('div');
-        horizontalLine.className = 'grid-line horizontal-line';
-        horizontalLine.style.top = `${i * cellHeight}px`;
-        boardGrid.appendChild(horizontalLine);
-    }
-    
-    // 添加垂直线
-    for (let j = 0; j < BOARD_SIZE; j++) {
-        const verticalLine = document.createElement('div');
-        verticalLine.className = 'grid-line vertical-line';
-        verticalLine.style.left = `${j * cellWidth}px`;
-        boardGrid.appendChild(verticalLine);
-    }
-    
-    // 添加交叉点
-    for (let i = 0; i < BOARD_SIZE; i++) {
-        for (let j = 0; j < BOARD_SIZE; j++) {
-            const intersection = document.createElement('div');
-            intersection.className = 'intersection';
-            intersection.style.top = `${i * cellHeight}px`;
-            intersection.style.left = `${j * cellWidth}px`;
-            boardGrid.appendChild(intersection);
-        }
-    }
-}
-
 // 初始化游戏
 function initGame() {
     // 初始化棋盘数组
     board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
     
     // 清空棋盘DOM
-    gameBoard.innerHTML = '<div id="board-grid"></div>';
+    gameBoard.innerHTML = '<div id="board-grid" class="go-board"></div>';
     const boardGrid = document.getElementById('board-grid');
     
-    // 创建棋盘网格
-    for (let i = 0; i < BOARD_SIZE; i++) {
-        const row = document.createElement('div');
-        row.className = 'cell-row';
-        boardGrid.appendChild(row);
-        
-        for (let j = 0; j < BOARD_SIZE; j++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.row = i;
-            cell.dataset.col = j;
-            cell.addEventListener('click', () => handleCellClick(i, j));
-            row.appendChild(cell);
-        }
-    }
+    // 设置棋盘尺寸
+    const boardSize = BOARD_SIZE * 25; // 每个格子25px
+    boardGrid.style.width = boardSize + 'px';
+    boardGrid.style.height = boardSize + 'px';
     
-    // 添加网格线和交叉点
+    // 添加网格线
     addGridLines();
+    
+    // 添加星位点
+    addStarPoints();
+    
+    // 添加点击事件监听器到整个棋盘
+    boardGrid.addEventListener('click', handleBoardClick);
     
     // 重置游戏状态
     currentPlayer = BLACK;
@@ -99,6 +57,26 @@ function initGame() {
     updateCurrentPlayer();
     winnerMessage.classList.add('hidden');
     winnerMessage.textContent = '';
+}
+
+// 处理棋盘点击事件
+function handleBoardClick(event) {
+    if (gameOver) return;
+    
+    const boardGrid = document.getElementById('board-grid');
+    const rect = boardGrid.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // 计算最近的交叉点
+    const cellSize = 25;
+    const col = Math.round(x / cellSize);
+    const row = Math.round(y / cellSize);
+    
+    // 确保坐标在有效范围内
+    if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
+        handleCellClick(row, col);
+    }
 }
 
 // 处理格子点击
@@ -133,6 +111,50 @@ function handleCellClick(row, col) {
     }
 }
 
+// 添加网格线
+function addGridLines() {
+    const boardGrid = document.getElementById('board-grid');
+    const cellSize = 25;
+    
+    // 添加水平线
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        const horizontalLine = document.createElement('div');
+        horizontalLine.className = 'board-line horizontal-line';
+        horizontalLine.style.top = (i * cellSize) + 'px';
+        boardGrid.appendChild(horizontalLine);
+    }
+    
+    // 添加垂直线
+    for (let j = 0; j < BOARD_SIZE; j++) {
+        const verticalLine = document.createElement('div');
+        verticalLine.className = 'board-line vertical-line';
+        verticalLine.style.left = (j * cellSize) + 'px';
+        boardGrid.appendChild(verticalLine);
+    }
+}
+
+// 添加星位点
+function addStarPoints() {
+    const boardGrid = document.getElementById('board-grid');
+    const cellSize = 25;
+    
+    // 标准围棋星位点位置 (4,4), (4,10), (4,16), (10,4), (10,10), (10,16), (16,4), (16,10), (16,16)
+    // 对于19x19棋盘，坐标从0开始计数
+    const starPositions = [
+        [3, 3], [3, 9], [3, 15],
+        [9, 3], [9, 9], [9, 15],
+        [15, 3], [15, 9], [15, 15]
+    ];
+    
+    starPositions.forEach(([row, col]) => {
+        const starPoint = document.createElement('div');
+        starPoint.className = 'star-point';
+        starPoint.style.left = (col * cellSize) + 'px';
+        starPoint.style.top = (row * cellSize) + 'px';
+        boardGrid.appendChild(starPoint);
+    });
+}
+
 // 落子
 function placePiece(row, col, player) {
     board[row][col] = player;
@@ -140,20 +162,30 @@ function placePiece(row, col, player) {
     // 移除上一步的标记
     if (lastMove) {
         const [lastRow, lastCol] = lastMove;
-        const lastCell = document.querySelector(`.cell[data-row="${lastRow}"][data-col="${lastCol}"]`);
-        if (lastCell) {
-            lastCell.classList.remove('last-move');
+        const lastPiece = document.querySelector(`.piece[data-row="${lastRow}"][data-col="${lastCol}"]`);
+        if (lastPiece) {
+            lastPiece.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.3)';
         }
     }
     
-    // 更新UI
-    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+    // 创建新棋子
+    const boardGrid = document.getElementById('board-grid');
+    const cellSize = 25;
     const piece = document.createElement('div');
     piece.className = `piece ${player === BLACK ? 'black-piece' : 'white-piece'}`;
-    cell.appendChild(piece);
+    piece.dataset.row = row;
+    piece.dataset.col = col;
+    piece.style.left = (col * cellSize) + 'px';
+    piece.style.top = (row * cellSize) + 'px';
     
-    // 添加最后一步的标记
-    cell.classList.add('last-move');
+    // 添加最后一步的高亮效果
+    if (row === lastMove?.[0] && col === lastMove?.[1]) {
+        piece.style.boxShadow = '0 0 5px 2px red';
+    }
+    
+    boardGrid.appendChild(piece);
+    
+    // 更新最后一步
     lastMove = [row, col];
 }
 
